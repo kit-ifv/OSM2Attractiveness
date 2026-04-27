@@ -34,7 +34,21 @@ def create_buildings_file(category, path_in_buildings, path_out, extract_tags_fi
     """Filter buildings, compute Level_number, export."""
     osm_file = os.path.join(path_in_buildings)
 
-    gdf = gpd.read_file(osm_file).set_crs('EPSG:4326', allow_override=True).to_crs(crs_proj_out)
+    # Read original buildings file
+    if osm_file.lower().endswith('.osm'):
+        print(f"Reading OSM file '{osm_file}' for buildings. Please be aware there might be invalid geometries, which will be skipped. Consider inspecting the buildings file in a GIS software like QGIS and export a tidy buildings file in GeoPackage format. You can then reference the GeoPackage file in this processing step.")
+        read_kwargs = {'layer': 'multipolygons'}
+    else:
+        read_kwargs = {}
+
+    gdf = gpd.read_file(osm_file, on_invalid='ignore', **read_kwargs)
+    n_invalid = gdf.geometry.isna().sum()
+    n_valid = gdf.geometry.notna().sum()
+    print(f"Geometries read: {n_valid} valid, {n_invalid} invalid/unreadable.")
+    if n_invalid > 0:
+        print(f"Warning: {n_invalid} feature(s) with invalid/unreadable geometries, they were skipped. "
+              f"Consider inspecting '{osm_file}' in GIS software for details.")
+    gdf = gdf[gdf.geometry.notna()].set_crs('EPSG:4326', allow_override=True).to_crs(crs_proj_out)
 
     # Filter: only rows with 'building'
     if 'building' in gdf.columns:

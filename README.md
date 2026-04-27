@@ -110,7 +110,7 @@ Rscript src/make/POIs2attractiveness.r config_rastatt_example
 Generate maps with attractiveness value per activity (zone- and grid-based)
 
 ```sh
-Rscript src/eval/eval_maps_.r config_rastatt_example
+Rscript src/eval/eval_maps.r config_rastatt_example
 ```
 
 

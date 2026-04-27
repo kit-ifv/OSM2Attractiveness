@@ -1,0 +1,28 @@
+# Here you define the your specific configuration for the area of interest, e.g. the bounding box, the name of the area (used as prefix for input and output files), paths to input and output data, etc. 
+
+area_name: Rastatt
+
+bbox_wgs84:
+  left: 8.084
+  right: 8.375
+  top: 48.916
+  bottom: 48.788
+
+crs_proj_out: EPSG:25832  # target CRS for POIs output; should match the coordinate system used by the model / the zones file (OSM source CRS is always EPSG:4326 = GPS coordinates from OSM (WGS84))
+
+exclude_osm_ids:
+  - id: 999999999 # dummy, no actual ID to exclude in this sample area
+
+paths: # you may use absolute or relative paths; for relative paths, the base path is the current working directory when running the script
+  osmosis_bin: D:/Software/osmosis-0.49.2/bin
+  osm_raw_base: data/osm-raw/germany-240101
+  filter_dir: config/filters/DE
+  osm_filtered_dir: data/osm-filtered
+  buildings_input: data/osm-filtered/Rastatt_Buildings.osm
+  pois_root_dir: data/pois
+  pois_dir_name: Export_Points_Region
+  zones_file: data/rastatt_example_zones_25832.geojson
+  attractiveness_output_root: data/attractiveness_rastatt_example
+  attractiveness_output_sub_attractiveness: attractiveness
+  attractiveness_factors_json: config/locale/attractiveness_factors_DE_sample.json
+  pois_config: config/locale/OSM2POIs_config_DE.yaml

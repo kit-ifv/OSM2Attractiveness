@@ -1,0 +1,1 @@
+amenity=doctors,dentist,veterinary healthcare=doctor,dentist,centre,psychotherapist,physiotherapist,podiatrist,clinic,veterinary building=doctor,dentist,centre,psychotherapist,physiotherapist,podiatrist,clinic,veterinary,doctors,dentist,veterinary

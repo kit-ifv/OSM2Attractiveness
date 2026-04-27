@@ -1,0 +1,1 @@
+shop=hairdresser,beauty,massage,optician

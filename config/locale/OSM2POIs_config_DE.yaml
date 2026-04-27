@@ -1,0 +1,34 @@
+default_supermarket_size_m2: 200
+name_based_pattern_hypermarket: "verbrauchermarkt|neukauf|famila|kaufland|metro|real|globus"
+
+supermarket_brands:
+  Lidl: ["lidl"]
+  Rewe: ["rewe"]
+  Edeka: ["edeka", "e aktiv", "e neukauf"]
+  Netto: ["netto", "netto marken discount"]
+  Penny: ["penny"]
+  Norma: ["norma"]
+  Aldi: ["aldi", "aldi nord", "aldi sued"]
+  E_Center: ["e center", "e-center", "ecenter"]
+  famila: ["famila"]
+  Kaufland: ["kaufland"]
+  Rewe_Center: ["rewe center"]
+  real: ["real"]
+  Marktkauf: ["marktkauf"]
+  Globus: ["globus"]
+
+supermarket_area_values:
+  Lidl: 926
+  Rewe: 1533
+  Edeka: 1293
+  Netto: 807
+  Penny: 735
+  Norma: 752
+  Aldi: 970
+  E_Center: 3292
+  famila: 4193
+  Kaufland: 4527
+  Rewe_Center: 6458
+  real: 6922
+  Marktkauf: 6725
+  Globus: 11080

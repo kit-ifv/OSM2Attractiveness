@@ -1,0 +1,223 @@
+{
+  "Pharmacy": {
+    "PrivateBusiness": [
+      "Count",
+      40.0
+    ]
+  },
+  "PostOffice": {
+    "PrivateBusiness": [
+      "Count",
+      40.0
+    ]
+  },
+  "DailyShopping_Supermarket_AldiLidl": {
+    "ShoppingDaily": [
+      "Area",
+      2.5
+    ]
+  },
+  "DailyShopping_Supermarket_Supermarket": {
+    "ShoppingDaily": [
+      "Area",
+      1.5
+    ]
+  },
+  "DailyShopping_Supermarket_Hypermarket": {
+    "ShoppingDaily": [
+      "Area",
+      1.0
+    ]
+  },
+  "DailyShopping_Drugstore": {
+    "ShoppingDaily": [
+      "Area",
+      1.0
+    ]
+  },
+  "DailyShopping_BakeryButcherKiosk": {
+    "ShoppingDaily": [
+      "Count",
+      150.0
+    ]
+  },
+  "DailyShopping_Other": {
+    "ShoppingDaily": [
+      "Area",
+      0.5
+    ]
+  },
+  "LongTermShopping_DIYGardenCenter": {
+    "ShoppingOther": [
+      "Area",
+      0.2
+    ]
+  },
+  "LongTermShopping_FurnitureStore": {
+    "ShoppingOther": {
+      "metric": "FloorArea",
+      "coefficient": 0.15
+    }
+  },
+  "LongTermShopping_Other": {
+    "ShoppingOther": {
+      "metric": "FloorArea",
+      "coefficient": 1,
+      "adjuster": "linear_size_multiplier(200, 800, 0.7, 0.2)"
+    }
+  },
+  "Doctor": {
+    "PrivateBusiness": [
+      "Count",
+      20.0
+    ]
+  },
+  "Bank": {
+    "PrivateBusiness": [
+      "Count",
+      50.0
+    ]
+  },
+  "Authority": {
+    "PrivateBusiness": [
+      "Count",
+      40.0
+    ]
+  },
+  "Hairdresser": {
+    "PrivateBusiness": [
+      "Count",
+      20.0
+    ]
+  },
+  "Church": {
+    "PrivateBusiness": [
+      "Area",
+      0.01
+    ],
+    "LeisureIndoor": [
+      "Area",
+      0.1
+    ]
+  },
+  "Hospital": {
+    "PrivateVisit": {
+      "metric": "FloorArea",
+      "coefficient": 0.025
+    }
+  },
+  "Library": {
+    "PrivateBusiness": {
+      "metric": "FloorArea",
+      "coefficient": 0.1
+    }
+  },
+  "FitnessCenter": {
+    "LeisureIndoor": [
+      "Area",
+      0.2
+    ]
+  },
+  "Cinema": {
+    "LeisureIndoor": {
+      "metric": "FloorArea",
+      "coefficient": 0.5
+    }
+  },
+  "Museums": {
+    "LeisureIndoor": {
+      "metric": "FloorArea",
+      "coefficient": 0.1
+    }
+  },
+  "Theater": {
+    "LeisureIndoor": [
+      "Area",
+      0.2
+    ]
+  },
+  "Restaurant": {
+    "LeisureIndoor": [
+      "Count",
+      50.0
+    ]
+  },
+  "SportsHall": {
+    "LeisureIndoor": [
+      "Area",
+      0.15
+    ]
+  },
+  "Zoo": {
+    "LeisureOutdoor": [
+      "Area",
+      0.08
+    ]
+  },
+  "SwimmingPool": {
+    "LeisureOutdoor": [
+      "Area",
+      0.1
+    ]
+  },
+  "Playground": {
+    "LeisureOutdoor": [
+      "Area",
+      0.2
+    ]
+  },
+  "Beach": {
+    "LeisureOutdoor": [
+      "Area",
+      0.02
+    ]
+  },
+  "Park": {
+    "LeisureOutdoor": {
+      "metric": "Area",
+      "coefficient": 0.06,
+      "max_size": 1000000
+    }
+  },
+  "Cemetery": {
+    "LeisureOutdoor": {
+      "metric": "Area",
+      "coefficient": 0.004,
+      "max_size": 1000000
+    }
+  },
+  "AllotmentGardens": {
+    "LeisureOutdoor": [
+      "Area",
+      0.003
+    ]
+  },
+  "SmallSportsField": {
+    "LeisureOutdoor": [
+      "Area",
+      0.025
+    ]
+  },
+  "SportsField": {
+    "LeisureOutdoor": [
+      "Area", 
+      0.01
+    ],
+    "Service": [
+      "Area",
+      0.01
+    ]
+  },
+  "Kindergarten": {
+    "Service": [
+      "Count",
+      80
+    ]
+  },
+  "RegionalRail": {
+    "Service": [
+      "Count",
+      100
+    ]
+  }
+}

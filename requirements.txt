@@ -1,0 +1,4 @@
+geopandas
+pandas
+shapely
+pyyaml

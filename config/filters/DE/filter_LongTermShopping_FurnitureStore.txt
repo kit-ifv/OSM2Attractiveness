@@ -1,0 +1,1 @@
+shop=furniture,bed,kitchen,carpet

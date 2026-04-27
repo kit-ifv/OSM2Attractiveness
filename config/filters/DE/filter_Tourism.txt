@@ -1,0 +1,1 @@
+tourism=aquarium,attraction,gallery,information,museum,theme_park,viewpoint,zoo,yes

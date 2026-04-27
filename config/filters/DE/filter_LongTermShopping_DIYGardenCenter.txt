@@ -1,0 +1,1 @@
+shop=doityourself,garden_center,garden_furniture,hardware

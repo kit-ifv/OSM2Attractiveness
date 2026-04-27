@@ -1,0 +1,1 @@
+tourism=gallery,museum,arts_centre building=gallery,museum,arts_centre

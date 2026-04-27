@@ -1,0 +1,1 @@
+shop=hairdresser,beauty,massage,optician,chemist,bakery,butcher,kiosk,beverages,dairy,pastry,convenience,greengrocer,supermarket,kiosk,organic,bed,kitchen,carpet,mall,furniture,doityourself,garden_center,garden_furniture,hardware amenity=marketplace,retail,kiosk,bank

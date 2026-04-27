@@ -1,0 +1,1 @@
+landuse=cemetery amenity=grave_yard

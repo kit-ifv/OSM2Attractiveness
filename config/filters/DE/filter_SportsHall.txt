@@ -1,0 +1,1 @@
+leisure=pitch,sports_centre building=sports_hall

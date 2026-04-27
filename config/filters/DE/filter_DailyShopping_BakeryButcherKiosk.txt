@@ -1,0 +1,1 @@
+shop=bakery,butcher,kiosk amenity=kiosk building=bakery,butcher,kiosk

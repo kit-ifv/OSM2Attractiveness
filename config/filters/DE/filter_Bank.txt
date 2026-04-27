@@ -1,0 +1,1 @@
+amenity=bank,atm building=bank,atm

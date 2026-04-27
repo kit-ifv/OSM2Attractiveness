@@ -1,0 +1,1 @@
+leisure=fitness_centre,fitness_center building=fitness_centre,fitness

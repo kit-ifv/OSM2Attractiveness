@@ -1,0 +1,1 @@
+sport=basketball,skateboard,climbing,bowls,boules,table_tennis,shooting,fitness,gymnastics,10pin

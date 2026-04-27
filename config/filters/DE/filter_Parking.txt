@@ -1,0 +1,1 @@
+amenity=parking,parking_space parking=* building=parking service=parking_aisle

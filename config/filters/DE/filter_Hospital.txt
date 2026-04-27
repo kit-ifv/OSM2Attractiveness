@@ -1,0 +1,1 @@
+amenity=hospital healthcare=hospital building=hospital

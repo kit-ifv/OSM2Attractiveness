@@ -1,0 +1,1 @@
+leisure=swimming_pool,water_park

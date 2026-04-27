@@ -1,7 +1,7 @@
-# evaluate_attractivities
+# eval_maps
 
-# This script visualizes calculated attractiveness results by zone type and purpose.
-# It generates static PNG maps and interactive HTML maps for zones and regular grids.
+# This script visualizes calculated attractiveness results by zone type and activity type.
+# It generates static PNG maps (and possibly interactive HTML maps) for zones and regular grids.
 # Input data is read from the attractiveness output directory produced by POIs2attractiveness.
 
 library(this.path)
@@ -10,7 +10,7 @@ library(leaflet)
 library(ggplot2)
 library(data.table)
 
-source(normalizePath(path.join(this.dir(), "evaluate_attractiveness_funcs.r")))
+source(normalizePath(path.join(this.dir(), "eval_maps_funcs.r")))
 
 # Which config is used?
 args <- commandArgs(trailingOnly = TRUE)

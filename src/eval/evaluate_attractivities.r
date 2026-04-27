@@ -1,5 +1,6 @@
 # Build maps for each purpose to check spatial distribution of attractiveness and identify potential issues (e.g. zones with very high/low values, spatial patterns, etc.).
 # Build maps in four different spatial zones: based on field "type" in zones file (values: 1, 2, 3, 4), as the values will be very different in all four types.
+# Build regular grid maps directly from POI attractiveness points (sum of POI attractiveness per cell and purpose).
 # Export the maps in an output directory in png file format. make one overview file for each zone type and furthermore one plot for each purpose.
 
 library(leaflet)
@@ -54,53 +55,54 @@ build_purpose_details_html <- function(data_sf, purpose) {
 }
 
 
-build_regular_grid_attractiveness <- function(zones_subset, purposes, cellsize_m = 1000) {
-	if (nrow(zones_subset) == 0L) {
+build_regular_grid_attractiveness <- function(poi_subset, purposes, cellsize_m = 1000) {
+	if (is.null(poi_subset) || nrow(poi_subset) == 0L) {
 		return(NULL)
 	}
 
-	zones_work <- zones_subset[, c("NO", purposes)]
-	zones_work <- zones_work[!sf::st_is_empty(zones_work), ]
-	if (nrow(zones_work) == 0L) {
+	required_cols <- c("purpose", "attractiveness")
+	missing_cols <- setdiff(required_cols, names(poi_subset))
+	if (length(missing_cols) > 0L) {
+		stop(paste0("Missing required POI columns for grid aggregation: ", paste(missing_cols, collapse = ", ")))
+	}
+
+	poi_work <- poi_subset[, c("purpose", "attractiveness")]
+	poi_work <- poi_work[!sf::st_is_empty(poi_work), ]
+	if (nrow(poi_work) == 0L) {
 		return(NULL)
 	}
 
-	zones_work <- sf::st_make_valid(zones_work)
-
-	grid <- sf::st_make_grid(zones_work, cellsize = cellsize_m, square = TRUE, what = "polygons")
+	grid <- sf::st_make_grid(poi_work, cellsize = cellsize_m, square = TRUE, what = "polygons")
+	if (length(grid) == 0L) {
+		return(NULL)
+	}
 	grid_sf <- sf::st_sf(grid_id = as.character(seq_along(grid)), geometry = grid)
 
-	intersections <- suppressWarnings(sf::st_intersection(zones_work, grid_sf))
-	if (nrow(intersections) == 0L) {
+	poi_grid <- suppressWarnings(sf::st_join(poi_work, grid_sf, join = sf::st_within, left = FALSE))
+	if (nrow(poi_grid) == 0L) {
 		return(NULL)
 	}
 
-	intersections$intersection_area <- as.numeric(sf::st_area(intersections))
-	intersections_dt <- as.data.table(sf::st_drop_geometry(intersections))
+	poi_grid_dt <- as.data.table(sf::st_drop_geometry(poi_grid))
+	poi_grid_dt <- poi_grid_dt[!is.na(purpose) & purpose %in% purposes & !is.na(attractiveness)]
+	if (nrow(poi_grid_dt) == 0L) {
+		return(NULL)
+	}
+
+	agg_long <- poi_grid_dt[, list(attractiveness = sum(attractiveness, na.rm = TRUE)), by = c("grid_id", "purpose")]
+	agg_wide <- dcast(agg_long, grid_id ~ purpose, value.var = "attractiveness", fill = NA_real_)
+	grid_sf <- merge(grid_sf, agg_wide, by = "grid_id", all.x = TRUE)
 
 	for (purpose in purposes) {
-		tmp <- as.data.frame(intersections_dt[, c("grid_id", "intersection_area", purpose), with = FALSE])
-		tmp <- tmp[!is.na(tmp[[purpose]]) & tmp[["intersection_area"]] > 0, , drop = FALSE]
-
-		if (nrow(tmp) == 0L) {
+		if (!(purpose %in% names(grid_sf))) {
 			grid_sf[[purpose]] <- NA_real_
-			next
 		}
-
-		agg <- aggregate(
-			x = data.frame(
-				weighted_value = tmp[[purpose]] * tmp[["intersection_area"]],
-				weight = tmp[["intersection_area"]]
-			),
-			by = list(grid_id = tmp[["grid_id"]]),
-			FUN = sum
-		)
-		agg[[purpose]] <- agg$weighted_value / agg$weight
-		agg_dt <- agg[, c("grid_id", purpose), drop = FALSE]
-		grid_sf <- merge(grid_sf, agg_dt, by = "grid_id", all.x = TRUE)
 	}
 
 	row_has_data <- rowSums(!is.na(as.data.frame(sf::st_drop_geometry(grid_sf[, purposes, drop = FALSE])))) > 0
+	for (purpose in purposes) {
+		grid_sf[[purpose]][is.na(grid_sf[[purpose]])] <- 0
+	}
 	grid_sf[row_has_data, ]
 }
 
@@ -122,9 +124,13 @@ make_html_map <- function(zones_sf_leaflet_subset, subset_name, purposes, output
   # Create color palettes for each purpose
   palettes <- setNames(
   	lapply(purposes, function(purpose) {
+			palette_values <- zones_sf_leaflet_subset[[purpose]]
+			if (has_grid && purpose %in% names(grid_sf_leaflet_subset)) {
+				palette_values <- c(palette_values, grid_sf_leaflet_subset[[purpose]])
+			}
   		colorNumeric(
   			palette = "viridis",
-  			domain = zones_sf_leaflet_subset[[purpose]],
+				domain = palette_values,
   			na.color = "#808080"
   		)
   	}),
@@ -334,12 +340,34 @@ if (!file.exists(path_attractiveness)) {
   stop(paste0("Datei für Attraktivitäten nicht gefunden: ", path_attractiveness))
 }
 
+path_all_poi_attractiveness <- file.path(path_output_dir, "all_poi_attractiveness.gpkg")
+if (!file.exists(path_all_poi_attractiveness)) {
+	stop(paste0("Datei für POI-Attraktivitäten nicht gefunden: ", path_all_poi_attractiveness))
+}
+
 attractiveness <- fread(path_attractiveness)
 
 purposes <- colnames(attractiveness)[-1]  # assuming first column is zoneId
 
 zones_sf <- sf::st_read(zones_file, quiet = TRUE)
 zones_sf <- merge(zones_sf, attractiveness, by.x = "NO", by.y = "zoneId", all.x = TRUE)
+
+poi_attractiveness_sf <- sf::st_read(path_all_poi_attractiveness)
+if (nrow(poi_attractiveness_sf) == 0L) {
+	stop("Die Datei all_poi_attractiveness.gpkg enthält keine Features.")
+}
+required_poi_cols <- c("purpose", "attractiveness")
+missing_poi_cols <- setdiff(required_poi_cols, names(poi_attractiveness_sf))
+if (length(missing_poi_cols) > 0L) {
+	stop(paste0("In all_poi_attractiveness.gpkg fehlen Spalten: ", paste(missing_poi_cols, collapse = ", ")))
+}
+if (sf::st_crs(poi_attractiveness_sf) != sf::st_crs(zones_sf)) {
+	poi_attractiveness_sf <- sf::st_transform(poi_attractiveness_sf, sf::st_crs(zones_sf))
+}
+
+# Attach zone type to each POI point so regular grids can be created per zone type.
+zone_typ_sf <- zones_sf[, c("NO", "typ")]
+poi_zone_join <- suppressWarnings(sf::st_join(poi_attractiveness_sf, zone_typ_sf, join = sf::st_within, left = FALSE))
 
 details_csv <- file.path(path_output_dir, "attractiveness_detailed_by_category_purpose.csv")
 if (!file.exists(details_csv)) {
@@ -361,12 +389,13 @@ zones_sf_leaflet <- zones_sf %>%
 for (zone_type in zone_types) {
   print(paste("Erstelle Karten für Zonentyp:", zone_type))
   zones_subset <- zones_sf[zones_sf$typ == zone_type, ]
+	poi_subset <- poi_zone_join[poi_zone_join$typ == zone_type, ]
 	grid_cellsize_zone <- grid_cellsize_m
 	if (zone_type %in% names(grid_cellsize_m_by_type)) {
 		grid_cellsize_zone <- as.numeric(grid_cellsize_m_by_type[[zone_type]])
 	}
 	print(paste("Reguläre Rasterauflösung (m):", grid_cellsize_zone))
-	zones_grid_subset <- build_regular_grid_attractiveness(zones_subset, purposes, cellsize_m = grid_cellsize_zone)
+	zones_grid_subset <- build_regular_grid_attractiveness(poi_subset, purposes, cellsize_m = grid_cellsize_zone)
   
   for (purpose in purposes) {
 	  make_image_map(zones_subset, zone_type, purpose, path_output_dir_maps)

@@ -105,9 +105,14 @@ Rscript src/make/POIs2attractiveness.r config_rastatt_example
 ```
 
 
-### Optional Evaluation Scripts
+### Optional: Evaluation Scripts
 
-The [src/eval](src/eval) folder contains scripts for checking and visualizing generated outputs, including attractiveness maps and data summaries.
+Generate maps with attractiveness value per activity (zone- and grid-based)
+
+```sh
+Rscript src/eval/eval_maps.r config_rastatt_example
+```
+
 
 ## Folder Structure
 

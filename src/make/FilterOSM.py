@@ -142,38 +142,114 @@ else:
     print(f"Export directory already exists. Note: Existing files will be overwritten")
  
 # %%
-def start_osmosis_filter(category, path_osm_extract, path_osmosis, path_export, path_filter, area_name, verbose=False):
+def read_filter_steps(path_to_file):
+    """Read filter steps from a file. One non-empty line equals one tag-filter step."""
+    steps = []
+    with open(path_to_file, "r", encoding="utf-8") as filter_file:
+        for raw_line in filter_file:
+            # Allow comments and empty lines in filter files.
+            line = raw_line.split("#", 1)[0].strip()
+            if line:
+                steps.append(line)
+    return steps
 
-    filter_white = open(path_filter + "\\filter_" + category + ".txt", 'r')
-    filter_black = open(path_filter + "\\reject_" + category + ".txt", 'r')
-    filter_white_text = filter_white.read()
-    filter_black_text = filter_black.read()
+
+def append_tag_filter_steps(command_parts, action, object_type, steps, in_pipe, next_pipe):
+    """Append sequential tag-filter commands and return the last out-pipe and next free pipe id."""
+    current_pipe = in_pipe
+    for step in steps:
+        command_parts.append(
+            f"--tag-filter {action}-{object_type} {step} inPipe.0={current_pipe} outPipe.0={next_pipe}"
+        )
+        current_pipe = next_pipe
+        next_pipe += 1
+    return current_pipe, next_pipe
+
+
+def start_osmosis_filter(category, path_osm_extract, path_osmosis, path_export, path_filter, area_name, verbose=False):
+    filter_white_path = os.path.join(path_filter, f"filter_{category}.txt")
+    filter_black_path = os.path.join(path_filter, f"reject_{category}.txt")
+    filter_white_steps = read_filter_steps(filter_white_path)
+    filter_black_steps = read_filter_steps(filter_black_path)
+
     os.chdir(path_osmosis)
-    
-    command = "osmosis --read-xml " + path_osm_extract + " outPipe.0=1 \
-    --read-xml " + path_osm_extract + " outPipe.0=2 \
-    --read-xml " + path_osm_extract + " outPipe.0=3 \
-    \
-    --tag-filter accept-relations "+filter_white_text+" inPipe.0=1 outPipe.0=4 \
-    --tag-filter reject-relations "+filter_black_text+" inPipe.0=4 outPipe.0=5 \
-    --used-way inPipe.0=5 outPipe.0=6 \
-    --used-node inPipe.0=6 outPipe.0=7 \
-    \
-    --tag-filter accept-ways "+filter_white_text+" inPipe.0=2 outPipe.0=8 \
-    --tag-filter reject-ways "+filter_black_text+" inPipe.0=8 outPipe.0=9 \
-    --tag-filter reject-relations inPipe.0=9 outPipe.0=10 \
-    --used-node inPipe.0=10 outPipe.0=11 \
-    \
-    --tag-filter accept-nodes "+filter_white_text+" inPipe.0=3 outPipe.0=12 \
-    --tag-filter reject-nodes "+filter_black_text+" inPipe.0=12 outPipe.0=13 \
-    --tag-filter reject-ways inPipe.0=13 outPipe.0=14 \
-    --tag-filter reject-relations inPipe.0=14 outPipe.0=15 \
-    \
-    --sort inPipe.0=15 outPipe.0=16\
-    --sort inPipe.0=7 outPipe.0=17\
-    --sort inPipe.0=11 outPipe.0=18\
-    --merge inPipe.0=16 inPipe.1=17 outPipe.0=19 --merge inPipe.0=18 inPipe.1=19 outPipe.0=20 \
-    --write-xml " + path_export + "\\" + area_name +"_" +category + ".osm inPipe.0=20"
+
+    command_parts = [
+        f"--read-xml {path_osm_extract} outPipe.0=1",
+        f"--read-xml {path_osm_extract} outPipe.0=2",
+        f"--read-xml {path_osm_extract} outPipe.0=3",
+    ]
+
+    next_pipe = 4
+
+    # Relations stream
+    relations_pipe = 1
+    relations_pipe, next_pipe = append_tag_filter_steps(
+        command_parts, "accept", "relations", filter_white_steps, relations_pipe, next_pipe
+    )
+    relations_pipe, next_pipe = append_tag_filter_steps(
+        command_parts, "reject", "relations", filter_black_steps, relations_pipe, next_pipe
+    )
+    relations_used_way_pipe = next_pipe
+    command_parts.append(f"--used-way inPipe.0={relations_pipe} outPipe.0={relations_used_way_pipe}")
+    next_pipe += 1
+    relations_used_node_pipe = next_pipe
+    command_parts.append(f"--used-node inPipe.0={relations_used_way_pipe} outPipe.0={relations_used_node_pipe}")
+    next_pipe += 1
+
+    # Ways stream
+    ways_pipe = 2
+    ways_pipe, next_pipe = append_tag_filter_steps(
+        command_parts, "accept", "ways", filter_white_steps, ways_pipe, next_pipe
+    )
+    ways_pipe, next_pipe = append_tag_filter_steps(
+        command_parts, "reject", "ways", filter_black_steps, ways_pipe, next_pipe
+    )
+    ways_no_relations_pipe = next_pipe
+    command_parts.append(f"--tag-filter reject-relations inPipe.0={ways_pipe} outPipe.0={ways_no_relations_pipe}")
+    next_pipe += 1
+    ways_used_node_pipe = next_pipe
+    command_parts.append(f"--used-node inPipe.0={ways_no_relations_pipe} outPipe.0={ways_used_node_pipe}")
+    next_pipe += 1
+
+    # Nodes stream
+    nodes_pipe = 3
+    nodes_pipe, next_pipe = append_tag_filter_steps(
+        command_parts, "accept", "nodes", filter_white_steps, nodes_pipe, next_pipe
+    )
+    nodes_pipe, next_pipe = append_tag_filter_steps(
+        command_parts, "reject", "nodes", filter_black_steps, nodes_pipe, next_pipe
+    )
+    nodes_no_ways_pipe = next_pipe
+    command_parts.append(f"--tag-filter reject-ways inPipe.0={nodes_pipe} outPipe.0={nodes_no_ways_pipe}")
+    next_pipe += 1
+    nodes_no_relations_pipe = next_pipe
+    command_parts.append(f"--tag-filter reject-relations inPipe.0={nodes_no_ways_pipe} outPipe.0={nodes_no_relations_pipe}")
+    next_pipe += 1
+
+    # Sorting and merging
+    sorted_nodes_pipe = next_pipe
+    command_parts.append(f"--sort inPipe.0={nodes_no_relations_pipe} outPipe.0={sorted_nodes_pipe}")
+    next_pipe += 1
+    sorted_relation_nodes_pipe = next_pipe
+    command_parts.append(f"--sort inPipe.0={relations_used_node_pipe} outPipe.0={sorted_relation_nodes_pipe}")
+    next_pipe += 1
+    sorted_way_nodes_pipe = next_pipe
+    command_parts.append(f"--sort inPipe.0={ways_used_node_pipe} outPipe.0={sorted_way_nodes_pipe}")
+    next_pipe += 1
+
+    first_merge_pipe = next_pipe
+    command_parts.append(
+        f"--merge inPipe.0={sorted_nodes_pipe} inPipe.1={sorted_relation_nodes_pipe} outPipe.0={first_merge_pipe}"
+    )
+    next_pipe += 1
+    second_merge_pipe = next_pipe
+    command_parts.append(
+        f"--merge inPipe.0={sorted_way_nodes_pipe} inPipe.1={first_merge_pipe} outPipe.0={second_merge_pipe}"
+    )
+
+    output_file = os.path.join(path_export, f"{area_name}_{category}.osm")
+    command = "osmosis " + " ".join(command_parts) + f" --write-xml {output_file} inPipe.0={second_merge_pipe}"
 
     if verbose:
         print("Running command:")

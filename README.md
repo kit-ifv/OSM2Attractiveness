@@ -87,6 +87,15 @@ Notes:
 
 - The script first creates an area extract from the raw `.osm.pbf` using the configured bounding box.
 - If no config argument is passed, all scripts default to `config_rastatt_example`.
+- Filters use the syntax described in [Osmosis docs](https://wiki.openstreetmap.org/wiki/Osmosis/Detailed_Usage_0.48#--tag-filter_(--tf)). Filters are logical `OR`, i.e., only one conditions needs to be fulfilled.
+- Filter files support multi-step filters: each non-empty line in `filter_<Category>.txt` or `reject_<Category>.txt` is applied as an additional `--tag-filter` step. In this way, logical `AND` conditions are can be achieved.
+
+Example (`filter_SportsHall.txt`):
+
+```txt
+leisure=sports_centre
+building=* building:part=yes
+```
 
 ### 2) Convert Filtered OSM Data to POIs
 

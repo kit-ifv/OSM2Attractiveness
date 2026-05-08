@@ -107,7 +107,7 @@ python src/make/OSM2POIs.py config_rastatt_example
 
 ### 3) Calculate Zone Attractiveness
 
-Aggregates POIs to zone-level attractiveness numbers (CSV + GPKG).
+Aggregates POIs to zone-level attractiveness numbers (CSV file). As an intermediate step, POIs with attractiveness values are created and exported as well (GPKG file).
 
 ```sh
 Rscript src/make/POIs2attractiveness.r config_rastatt_example

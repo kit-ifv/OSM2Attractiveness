@@ -1,1 +1,1 @@
-amenity=place_of_worship building=religious,cathedral,chapel,church,mosque,temple,synagogue,shrine landuse=religious 
+building=religious,cathedral,chapel,church,mosque,temple,synagogue,shrine

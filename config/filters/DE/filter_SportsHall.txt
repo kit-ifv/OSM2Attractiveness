@@ -1,1 +1,2 @@
-leisure=pitch,sports_centre building=sports_hall
+leisure=sports_centre
+building=* building:part=yes

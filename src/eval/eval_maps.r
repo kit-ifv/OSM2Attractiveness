@@ -12,7 +12,7 @@ library(data.table)
 
 source(normalizePath(path.join(this.dir(), "eval_maps_funcs.r")))
 
-# Which config is used?
+# Which config is used? Retrieve from command line
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) > 0L) {
   config_name <- args[1]
@@ -41,6 +41,7 @@ grid_cellsize_m_by_type <- as_named_numeric(
   eval_cfg$grid_cellsize_m_by_type %||% list("1" = 1000, "2" = 2000, "3" = 5000)
 )
 
+# Understand where results are saved
 if (!is.null(run_subdir_arg) && nzchar(run_subdir_arg)) {
   path_output_dir <- file.path(path_output_base, run_subdir_arg)
 } else {

@@ -7,12 +7,15 @@
 # - Configuration of how to calculate attractiveness from POI metrics (e.g. size, levels, etc.) in a JSON file
 # Output:
 # - CSV file with calculated attractiveness per zone
-# - GeoPackage files with all POIs and their calculated attractiveness for reference
+# - GeoPackage files with all POIs and their calculated attractiveness 
+# - CSV file with attractiveness per POI and purpose (recommended to use as base for futher calculations)
 # Note: Output data should be validated afterwards as in every region there are specific peculiarities in the POI data that may require adjustments to cleaning rules or attractiveness calculation.
 
 library(this.path)
 library(yaml)
+source(normalizePath(path.join(this.dir(), "POIs2attractiveness_helpers.r")))
 source(normalizePath(path.join(this.dir(), "POIs2attractiveness_funcs.r")))
+source(normalizePath(path.join(this.dir(), "POIs2attractiveness_main.r")))
 
 # Which config is used?
 args <- commandArgs(trailingOnly = TRUE)
@@ -29,7 +32,10 @@ area_cfg <- yaml.load_file(config_file)
 area_name <- area_cfg$area_name
 pois_root <- normalizePath(path.join(area_cfg$paths$pois_root_dir))
 poi_dir <- normalizePath(path.join(pois_root, area_cfg$paths$pois_dir_name))
+
 zones_file <- area_cfg$paths$zones_file
+percentile_imputation <- area_cfg$percentile_imputation %||% 0.15
+
 timestamp <- format(Sys.time(), "%Y-%m-%d_%H-%M")
 path_output_dir <- paste(
 	area_cfg$paths$attractiveness_output_root,
@@ -70,6 +76,7 @@ cat("Attractiveness factors JSON: ", attractiveness_factors_json, "\n", sep = ""
 cat("POI file prefix: ", poi_file_prefix, "\n", sep = "")
 cat("POI file suffix: ", poi_file_suffix, "\n", sep = "")
 cat("Zone ID field: ", zone_id_field, "\n", sep = "")
+cat("Percentile for area imputation: ", percentile_imputation, "\n", sep = "")
 cat("Defaults - area field name: ", calc_defaults$area_field, "\n", sep = "")
 cat("Defaults - levels field name: ", calc_defaults$levels_field, "\n", sep = "")
 cat("Defaults - floor field name: ", calc_defaults$floor_field, "\n", sep = "")
@@ -89,7 +96,7 @@ if (!dir.exists(path_output_dir)) {
 	cat("Output directory already exists: ", path_output_dir, "\n", sep = "")
 }
 
-pois <- load_pois_from_json(attractiveness_factors_json)
+attractiveness_factors <- load_attractiveness_factors_from_json(attractiveness_factors_json)
 
 
 # Do actual processing
@@ -97,19 +104,26 @@ pois <- load_pois_from_json(attractiveness_factors_json)
 res <- calculate_attractiveness(
 	poi_dir = poi_dir,
 	zones_file = zones_file,
-	pois = pois,
+	attractiveness_factors = attractiveness_factors,
 	poi_file_prefix = poi_file_prefix,
 	poi_file_suffix = poi_file_suffix,
 	zone_id_field = zone_id_field,
 	cleaning_rules = cleaning_rules,
+	percentile_imputation = percentile_imputation,
 	defaults = calc_defaults,
 	output_csv = path_output_csv,
 	output_gpkg_all_pois = path_output_gpkg_all_pois,
 	output_gpkg_all_poi_attractiveness = path_output_gpkg_all_poi_attractiveness
 )
 
+
 print(res$zone_attractiveness)
 
 
-results_detailed_wide <- dcast(res$poi_details, zoneId ~ category + purpose, value.var = "attractiveness", fill = 0, fun.aggregate = sum)
+results_detailed_wide <- dcast(res$all_poi_attractiveness, zoneId ~ category + purpose, value.var = "attractiveness", fill = 0, fun.aggregate = sum)
 fwrite(results_detailed_wide, paste(path_output_dir, "attractiveness_detailed_by_category_purpose.csv", sep = "/"))
+
+
+# Create CSV file with attractiveness per POI, with which we can perform further calculation for final attractiveness values by zone
+# (allow POI-ID-based adjustments, add other attractiveness data sources, ...)
+fwrite(res$all_poi_attractiveness, paste(path_output_dir, "attractiveness_detailed_all_pois.csv", sep = "/"))

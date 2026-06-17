@@ -1,1 +1,1 @@
-shop=* amenity=fuel
+shop=*

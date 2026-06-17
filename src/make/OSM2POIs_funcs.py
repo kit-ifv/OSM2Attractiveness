@@ -31,7 +31,7 @@ from OSM2POIs_helpers import (
 # Functions
 # -----------------------------
 def create_buildings_file(category, path_in_buildings, path_out, extract_tags_fields, crs_proj_out, export_fileext_largefiles):
-    """Filter buildings, compute Level_number, export."""
+    """Filter buildings (based on .osm-file or repaired OSM-file (gpkg)), compute Level_number, export."""
     osm_file = os.path.join(path_in_buildings)
 
     # Read original buildings file

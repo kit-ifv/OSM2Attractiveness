@@ -7,7 +7,7 @@ Overall idea: The file defines how each POI contributes to trip-purpose attracti
 Top level: JSON object
 
 - Key = POI category name (must match the POI filename category part)
-- Value = object with one or more trip purposes
+- Value = object with one or more trip purposes, additionally (facultative) category-wide settings
 
 Purpose level:
 
@@ -39,6 +39,7 @@ Optional cap:
 
 `max_size` and `adjuster` are optional.
 
+
 ## Allowed metric values
 
 These strings are valid for `<Metric>`:
@@ -69,11 +70,22 @@ Currently, only one adjuster function is accepted:
 
 `linear_size_multiplier(size_min, size_max, mult_at_min, mult_at_max)`
 
+or (optional 5-argument form)
+
+`linear_size_multiplier(size_min, size_max, size_cap, mult_at_min, mult_at_max)`
+
 Behavior:
 
 - Linear interpolation from `mult_at_min` (at `size_min`) to `mult_at_max` (at `size_max`)
-- Values below/above bounds are clamped to the end multipliers
+- Values below `size_min` use `mult_at_min`
+- In the 4-argument form, values above `size_max` are capped so that `adjusted_metric_value` does not grow beyond `size_max * mult_at_max`
+- In the 5-argument form, values in `(size_max, size_cap]` use `mult_at_max`, and values above `size_cap` are capped so that `adjusted_metric_value` does not grow beyond `size_cap * mult_at_max`
 - Missing/non-finite size values get neutral multiplier `1`
+
+## Category-wide settings
+`filter`: Object filter, currently implemented: `min_area` (only include objects with area of at least n; caution: objects with no area at all are included as well)
+`percentile_imputation`: Category-specific override for global imputation value
+
 
 ## Filename matching requirement
 
@@ -95,14 +107,16 @@ In the example config, this corresponds to files like `Rastatt_<Category>.geojso
 			"metric": "Area",
 			"coefficient": 0.06,
 			"max_size": 1000000
-		}
+		}, 
+		"filter": { min_area: 100 }
 	},
 	"LongTermShopping_Other": {
 		"ShoppingOther": {
 			"metric": "FloorArea",
 			"coefficient": 1.0,
 			"adjuster": "linear_size_multiplier(200, 800, 0.7, 0.2)"
-		}
+		}, 
+		"percentile_imputation": 0.4
 	}
 }
 ```

@@ -17,6 +17,14 @@ import yaml
 # Config #
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
+print("=" * 80)
+print("FilterOSM")
+print("Filter OSM data with categories required for the model")
+print("=" * 80)
+print("")
+print("Configuration:")
+
+
 # get config file path from command line argument, if provided, otherwise use default
 config_file = None
 if len(os.sys.argv) > 1:
@@ -68,12 +76,6 @@ path_export_absolute = os.path.abspath(path_export)
 path_filter_absolute = os.path.abspath(path_filter)
 
 overall_start_time = time.time()
-print("=" * 80)
-print("FilterOSM")
-print("Filter OSM data with categories required for the model")
-print("=" * 80)
-print("")
-print("Configuration:")
 print("Config file:", config_file)
 print("Area:", area_name)
 print("Filter folder:", path_filter_absolute)
@@ -289,7 +291,7 @@ categories = [
     "LongTermShopping_DIYGardenCenter",
     "LongTermShopping_FurnitureStore",
     "LongTermShopping_Other",
-    "LongTermShopping_DepartmentStore",
+    "LongTermShopping_DepartmentClothingElectronics",
     "DailyShopping_BakeryButcherKiosk",
     "DailyShopping_Drugstore",
     "DailyShopping_Other",
@@ -297,12 +299,14 @@ categories = [
     "EV_ChargingStation",
     "Hairdresser",
     "SwimmingPool",
+    "SwimmingPoolOutdoor",
     "Beach",
     "Universities",
     "Hotel",
     "Kindergarten",
     "Cinema",
     "Museums",
+    "MuseumsOutdoor",
     "Theater",
     "Restaurant",
     "Church",
@@ -318,6 +322,7 @@ categories = [
     "SportsField",
     "SmallSportsField",
     "Mailbox",
+    "Schools",
     "RegionalRail",
     "Buildings"
 ]
@@ -326,6 +331,7 @@ total_categories = len(categories)
 
 for index, category in enumerate(categories, start=1):
     print(f"Start processing category {index} of {total_categories}: {category}")
+    category_start_time = time.time()
     start_osmosis_filter(
         category,
         path_osm_extract_absolute,
@@ -335,6 +341,13 @@ for index, category in enumerate(categories, start=1):
         area_name,
         verbose
     )
+    category_runtime = time.time() - category_start_time
+    elapsed_total = time.time() - overall_start_time
+    avg_time_per_category = elapsed_total / index
+    remaining = total_categories - index
+    eta_seconds = avg_time_per_category * remaining
+    eta_timestamp = datetime.fromtimestamp(time.time() + eta_seconds).strftime('%Y-%m-%d %H:%M:%S')
+    print(f"Runtime: {category_runtime:.2f}s | Elapsed: {elapsed_total:.0f}s | Remaining: {eta_seconds:.0f}s ({remaining} categories left) | ETC: {eta_timestamp}")
     print("")
 
 print("DONE - Runtime: {:.2f}h".format((time.time() - overall_start_time) / 3600))

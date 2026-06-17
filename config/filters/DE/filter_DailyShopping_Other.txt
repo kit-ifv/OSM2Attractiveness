@@ -1,1 +1,1 @@
-shop=beverages,dairy,pastry,convenience,greengrocer
+shop=beverages

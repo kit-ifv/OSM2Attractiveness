@@ -167,13 +167,13 @@ run_categories([
 
 # Area categories
 run_categories([
-    'Playground','FitnessCenter','SportsHall','SportsField','SmallSportsField','SwimmingPool','Beach',
-    'Restaurant','Church','Park','Cemetery','Zoo','AllotmentGardens', 'DailyShopping_Drugstore'
+    'Playground','FitnessCenter','SportsHall','SportsField','SmallSportsField','SwimmingPool','SwimmingPoolOutdoor','Beach',
+    'Restaurant','Church','Park','Cemetery','Zoo','AllotmentGardens', 'DailyShopping_Drugstore', 'MuseumsOutdoor'
 ], area, area_name, processing_cfg)
 
 # Floor area
 run_categories([
-    'Library', 'LongTermShopping_DepartmentStore', 'Hotel', 'Cinema', 'Museums', 'Theater',
+    'Library', 'LongTermShopping_DepartmentClothingElectronics', 'Hotel', 'Cinema', 'Museums', 'Theater',
     'LongTermShopping_Other', 'DailyShopping_Other', 'Kindergarten',
 ], floor_area, area_name, processing_cfg)
 

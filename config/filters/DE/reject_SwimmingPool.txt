@@ -1,1 +1,1 @@
-building=''
+key=value

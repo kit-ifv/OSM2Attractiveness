@@ -1,1 +1,1 @@
-leisure=swimming_pool,water_park
+leisure=swimming_pool,swimming_area

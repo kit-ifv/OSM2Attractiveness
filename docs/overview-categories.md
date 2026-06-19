@@ -26,17 +26,19 @@ Metric format:
 | EV_ChargingStation | E_Ladestation | Electric vehicle charging stations. | - | Exported infrastructure layer only. |
 | FitnessCenter | Fitnesscenter | Fitness centres, gyms, and similar fitness buildings. | Area |  |
 | Hairdresser | Friseur | Hairdressers, beauty services, massage, and opticians. | Count |  |
-| Hospital | Krankenhaus | Hospitals and hospital buildings. | Floor Area | Floor area based; buildings are especially relevant in processing. |
+| Hospital | Krankenhaus | Hospitals and hospital buildings. | Floor Area | Buildings are especially relevant in processing. |
 | Hotel | Hotel | Hotels, motels, hostels, guest houses, chalets, and apartment-style accommodation. | - |  |
 | Kindergarten | Kindergarten | Kindergartens, childcare, and preschool facilities. | Count | Broad early-childhood services bucket. |
 | Library | Bibliothek | Libraries and library facilities. | Floor Area |  |
 | LongTermShopping | Einkauf_langfrist | General long-term shopping umbrella category. | | Umbrella filter exists, but the sample scoring config uses the dedicated subcategories below instead. |
 | LongTermShopping_DepartmentStore | Einkauf_langfrist_WarenKaufhaus | Department stores, electronics stores, and clothing stores. |  |  |
 | LongTermShopping_DIYGardenCenter | Einkauf_langfrist_BauGartenmarkt | DIY stores, hardware stores, garden centres, and garden-furniture stores. | Area |  |
-| LongTermShopping_FurnitureStore | Einkauf_langfrist_Moebelmarkt | Furniture, bed, kitchen, and carpet stores. | Floor Area | Floor area based. |
-| LongTermShopping_Other | Einkauf_langfrist_Sonstiges | Other larger shopping destinations and fuel-station retail. | Floor Area |  |
+| LongTermShopping_FurnitureStore | Einkauf_langfrist_Moebelmarkt | Furniture, bed, kitchen, and carpet stores. | Floor Area |  |
+| LongTermShopping_DepartmentClothingElectronics | Einkauf_langfrist_WarenKaufhaus | Department, clothing, electronics stores. | Floor Area | |
+| LongTermShopping_Other | Einkauf_langfrist_Sonstiges | All other shopping destinations. | Floor Area | Should be seperated in further categories in the future to divide stores in high and low number of customers per area, and to seperate end-customer oriented shops from others (e.g., stores related with car or building materials have large areas but not the corresponding number of customers). |
 | Mailbox | Briefkasten | Post boxes and mailboxes. | - |  |
 | Museums | Museen | Museums, galleries, and arts centres. | Floor Area |  |
+| MuseumsOutdoor | Freilichtmuseen | Open-air museums. | Floor Area | Often have very large areas but not the corresponding number of customers (low density). |
 | Park | Park | Parks and recreation grounds. | Area |  |
 | Parking | Parken | Parking areas, parking spaces, parking buildings, and parking aisles. | - | Exported infrastructure layer only. |
 | Pharmacy | Apotheke | Pharmacies and pharmacy buildings. | Count |  |
@@ -47,13 +49,14 @@ Metric format:
 | Schools | Schulen | Schools and school buildings. | - |  |
 | SmallSportsField | Sportplatz_klein | Smaller (high-density) sport and recreation facilities such as basketball, climbing, table tennis, skating, shooting, bowling, and similar uses. | Area |  |
 | SportsField | Sportplatz | Outdoor pitches and running tracks. | Area |  |
-| SportsHall | Sporthalle | Sports halls, sports centres, and related indoor sports facilities. | Area | Indoor sports bucket; filter partially overlaps with sports-centre style uses. |
-| SwimmingPool | Schwimmbad | Swimming pools and water parks. | Area | The translation aliases `Freibad` and `Hallenbad` exist, but the sample pipeline keeps one combined category. |
+| SportsHall | Sporthalle | Sports halls, sports centres, and related indoor sports facilities, including sports-oriented indoor swimming pool facilities. | Area | Indoor sports bucket; filter partially overlaps with sports-centre style uses. |
+| SwimmingPool | Hallenbad | Leisure-oriented swimming pool facilities. | Area | Tagged as `water parks`. |
+| SwimmingPoolOutdoor | Freibad | Outdoor swimming pools and swimming areas. | Area | The swimming area is used as metric, not the surrounding grass. |
 | Theater | Theater | Theatres and social centres used as cultural venues. | Area | Broader than theatre alone because social centres are included. |
 | Tourism | tourism | General tourism attractions such as aquariums, attractions, galleries, museums, theme parks, viewpoints, zoos, and visitor information. | - | Broad tourism layer; overlaps with scored specialist classes such as `Museums` and `Zoo`. |
 | Universities | Hochschulen | Universities and university campuses. | - |  |
 | Zoo | Zoo | Zoos. | Area |  |
 
-## Notes
 
-- 
+# Notes
+- In the future, more precise handling of relations could be pursued (capture facilities that are inside of others, either geometrically or logically with OSM relations).

@@ -1,1 +1,1 @@
-building=*
+access=private,no

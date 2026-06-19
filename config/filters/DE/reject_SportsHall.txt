@@ -1,1 +1,1 @@
-building='' sport=horse_racing,soccer,tennis,swimming
+building=school sport=horse_racing,soccer,tennis

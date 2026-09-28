@@ -6,7 +6,7 @@
 
 library(this.path)
 library(yaml)
-library(leaflet)
+library(mapgl)
 library(ggplot2)
 library(data.table)
 
@@ -142,7 +142,7 @@ if (!("zoneId" %in% names(details_dt))) {
 details_dt[, zoneId := as.character(zoneId)]
 zones_sf <- merge(zones_sf, details_dt, by.x = "NO", by.y = "zoneId", all.x = TRUE)
 
-zones_sf_leaflet <- sf::st_transform(zones_sf, 4326)
+zones_sf_mapgl <- sf::st_transform(zones_sf, 4326)
 
 
 # Determine zone types to process
@@ -198,19 +198,19 @@ for (zone_type in zone_types) {
 
   if (eval_cfg$make_html_maps == TRUE) {
 
-    zones_sf_leaflet_subset <- zones_sf_leaflet[zones_sf_leaflet$typ == zone_type, ]
-    zones_grid_leaflet_subset <- NULL
+    zones_sf_mapgl_subset <- zones_sf_mapgl[zones_sf_mapgl$typ == zone_type, ]
+    zones_grid_mapgl_subset <- NULL
     if (!is.null(zones_grid_subset) && nrow(zones_grid_subset) > 0L) {
-      zones_grid_leaflet_subset <- sf::st_transform(zones_grid_subset, 4326)
+      zones_grid_mapgl_subset <- sf::st_transform(zones_grid_subset, 4326)
     }
 
     make_html_map(
-      zones_sf_leaflet_subset = zones_sf_leaflet_subset,
+      zones_sf_mapgl_subset = zones_sf_mapgl_subset,
       subset_name = as.character(zone_type),
       purposes = purposes,
       output_dir = path_output_dir_maps,
       timestamp_string = timestamp,
-      grid_sf_leaflet_subset = zones_grid_leaflet_subset
+      grid_sf_mapgl_subset = zones_grid_mapgl_subset
     )
 
   }

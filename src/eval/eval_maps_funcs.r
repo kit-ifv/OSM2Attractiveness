@@ -98,120 +98,159 @@ build_regular_grid_attractiveness <- function(poi_subset, purposes, cellsize_m =
   grid_sf[row_has_data, ]
 }
 
-make_html_map <- function(zones_sf_leaflet_subset, subset_name, purposes, output_dir, timestamp_string, grid_sf_leaflet_subset = NULL) {
-  path_output_html <- file.path(output_dir, paste0("attractiveness_interactive_map_zones_", subset_name, "_", timestamp_string, ".html"))
-  has_grid <- !is.null(grid_sf_leaflet_subset) && nrow(grid_sf_leaflet_subset) > 0
-  zone_groups <- paste0(purposes, " (zones)")
-  grid_groups <- paste0(purposes, " (grid)")
+mapgl_style_url <- "https://tiles.openfreemap.org/styles/liberty"
 
-  map <- leaflet(zones_sf_leaflet_subset) %>%
-    addTiles(group = "OpenStreetMap") %>%
-    addProviderTiles(providers$CartoDB.Positron, group = "CartoDB") %>%
-    setView(
-      lng = mean(sf::st_bbox(zones_sf_leaflet_subset)[c(1, 3)]),
-      lat = mean(sf::st_bbox(zones_sf_leaflet_subset)[c(2, 4)]),
-      zoom = 10
-    )
+safe_mapgl_id <- function(...) {
+  parts <- as.character(c(...))
+  raw_id <- paste(parts[nzchar(parts)], collapse = "_")
+  clean_id <- gsub("[^A-Za-z0-9_-]+", "_", raw_id)
+  clean_id <- gsub("_+", "_", clean_id)
+  clean_id <- gsub("^_|_$", "", clean_id)
+  if (!nzchar(clean_id)) "layer" else clean_id
+}
 
-  palettes <- setNames(
-    lapply(purposes, function(purpose) {
-      palette_values <- zones_sf_leaflet_subset[[purpose]]
-      if (has_grid && purpose %in% names(grid_sf_leaflet_subset)) {
-        palette_values <- c(palette_values, grid_sf_leaflet_subset[[purpose]])
-      }
-      colorNumeric(palette = "viridis", domain = palette_values, na.color = "#808080")
-    }),
-    purposes
-  )
+make_mapgl_color_stops <- function(values, n = 6L) {
+  finite_values <- values[is.finite(values)]
+  colors <- grDevices::hcl.colors(n, "Viridis")
+
+  if (length(finite_values) == 0L) {
+    return(list(values = seq(0, 1, length.out = n), colors = colors))
+  }
+
+  min_value <- min(finite_values, na.rm = TRUE)
+  max_value <- max(finite_values, na.rm = TRUE)
+
+  if (isTRUE(all.equal(min_value, max_value))) {
+    delta <- if (min_value == 0) 1 else abs(min_value) * 0.05
+    min_value <- min_value - delta
+    max_value <- max_value + delta
+  }
+
+  list(values = seq(min_value, max_value, length.out = n), colors = colors)
+}
+
+make_html_map <- function(zones_sf_mapgl_subset, subset_name, purposes, output_dir, timestamp_string, grid_sf_mapgl_subset = NULL) {
+  path_output_html <- file.path(output_dir, paste0("interactive_zones_", subset_name, ".html"))
+  has_grid <- !is.null(grid_sf_mapgl_subset) && nrow(grid_sf_mapgl_subset) > 0
+  layer_control <- list()
+  has_legend <- FALSE
+
+  map <- maplibre(
+    style = mapgl_style_url,
+    bounds = zones_sf_mapgl_subset,
+    projection = "mercator",
+    height = 700
+  ) |>
+    add_navigation_control(position = "top-right") |>
+    add_scale_control(position = "bottom-left", unit = "metric")
 
   for (purpose in purposes) {
-    pal <- palettes[[purpose]]
-    zone_group <- paste0(purpose, " (zones)")
-    grid_group <- paste0(purpose, " (grid)")
-    detail_html <- build_purpose_details_html(zones_sf_leaflet_subset, purpose)
-
-    popup_content <- paste0(
-      "<strong>Zone ID:</strong> ", zones_sf_leaflet_subset$NO, "<br>",
-      "<strong>Type:</strong> ", zones_sf_leaflet_subset$typ, "<br>",
-      "<strong>Name:</strong> ", zones_sf_leaflet_subset$NAME, "<br>",
-      "<strong>", purpose, ":</strong> ", format(round(zones_sf_leaflet_subset[[purpose]], 2), nsmall = 2), "<br><br>",
-      detail_html
+    palette_values <- zones_sf_mapgl_subset[[purpose]]
+    if (has_grid && purpose %in% names(grid_sf_mapgl_subset)) {
+      palette_values <- c(palette_values, grid_sf_mapgl_subset[[purpose]])
+    }
+    stops <- make_mapgl_color_stops(palette_values)
+    fill_color <- interpolate(
+      column = purpose,
+      values = stops$values,
+      stops = stops$colors,
+      na_color = "#808080"
     )
 
-    map <- map %>%
-      addPolygons(
-        data = zones_sf_leaflet_subset,
-        fillColor = ~pal(zones_sf_leaflet_subset[[purpose]]),
-        fillOpacity = 0.7,
-        weight = 1,
-        color = "white",
-        group = zone_group,
-        label = ~paste0(
-          "Zone: ", NO, "<br>",
-          purpose, ": ", format(round(zones_sf_leaflet_subset[[purpose]], 2), nsmall = 2)
-        ),
-        labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px")),
-        popup = popup_content,
-        highlightOptions = highlightOptions(weight = 3, color = "red", bringToFront = TRUE)
-      ) %>%
-      addLegend(
-        position = "bottomright",
-        pal = pal,
-        values = zones_sf_leaflet_subset[[purpose]],
-        title = purpose,
-        group = zone_group,
-        opacity = 0.7
+    detail_html <- build_purpose_details_html(zones_sf_mapgl_subset, purpose)
+    zone_popup_col <- safe_mapgl_id("popup", purpose)
+    zone_tooltip_col <- safe_mapgl_id("tooltip", purpose)
+    zone_layer_id <- safe_mapgl_id("zones", subset_name, purpose)
+    zone_group <- paste0(purpose, " (zones)")
+    zones_layer <- zones_sf_mapgl_subset
+    zones_layer[[zone_popup_col]] <- paste0(
+      "<strong>Zone ID:</strong> ", zones_layer$NO, "<br>",
+      "<strong>Type:</strong> ", zones_layer$typ, "<br>",
+      "<strong>Name:</strong> ", zones_layer$NAME, "<br>",
+      "<strong>", purpose, ":</strong> ", format(round(zones_layer[[purpose]], 2), nsmall = 2), "<br><br>",
+      detail_html
+    )
+    zones_layer[[zone_tooltip_col]] <- paste0(
+      "Zone: ", zones_layer$NO, "<br>",
+      purpose, ": ", format(round(zones_layer[[purpose]], 2), nsmall = 2)
+    )
+
+    map <- map |>
+      add_fill_layer(
+        id = zone_layer_id,
+        source = zones_layer,
+        fill_color = fill_color,
+        fill_opacity = 0.7,
+        fill_outline_color = "#ffffff",
+        visibility = if (purpose == purposes[1]) "visible" else "none",
+        popup = zone_popup_col,
+        tooltip = zone_tooltip_col,
+        hover_options = list(fill_outline_color = "#ff3333", fill_opacity = 0.85)
+      ) |>
+      add_continuous_legend(
+        legend_title = zone_group,
+        values = stops$values,
+        colors = stops$colors,
+        position = "bottom-right",
+        layer_id = zone_layer_id,
+        unique_id = paste0(zone_layer_id, "_legend"),
+        add = has_legend
       )
+    has_legend <- TRUE
+    layer_control[[zone_group]] <- zone_layer_id
 
     if (has_grid) {
-      map <- map %>%
-        addPolygons(
-          data = grid_sf_leaflet_subset,
-          fillColor = ~pal(grid_sf_leaflet_subset[[purpose]]),
-          fillOpacity = 0.7,
-          weight = 0.4,
-          color = "#666666",
-          group = grid_group,
-          label = ~paste0(
-            "Grid cell: ", grid_id, "<br>",
-            purpose, ": ", format(round(grid_sf_leaflet_subset[[purpose]], 2), nsmall = 2)
-          ),
-          labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px")),
-          popup = ~paste0(
-            "<strong>Grid cell:</strong> ", grid_id, "<br>",
-            "<strong>", purpose, ":</strong> ", format(round(grid_sf_leaflet_subset[[purpose]], 2), nsmall = 2)
-          ),
-          highlightOptions = highlightOptions(weight = 2, color = "red", bringToFront = TRUE)
-        ) %>%
-        addLegend(
-          position = "bottomright",
-          pal = pal,
-          values = grid_sf_leaflet_subset[[purpose]],
-          title = paste0(purpose, " (grid)"),
-          group = grid_group,
-          opacity = 0.7
+      grid_popup_col <- safe_mapgl_id("popup_grid", purpose)
+      grid_tooltip_col <- safe_mapgl_id("tooltip_grid", purpose)
+      grid_layer_id <- safe_mapgl_id("grid", subset_name, purpose)
+      grid_group <- paste0(purpose, " (grid)")
+      grid_layer <- grid_sf_mapgl_subset
+      grid_layer[[grid_popup_col]] <- paste0(
+        "<strong>Grid cell:</strong> ", grid_layer$grid_id, "<br>",
+        "<strong>", purpose, ":</strong> ", format(round(grid_layer[[purpose]], 2), nsmall = 2)
+      )
+      grid_layer[[grid_tooltip_col]] <- paste0(
+        "Grid cell: ", grid_layer$grid_id, "<br>",
+        purpose, ": ", format(round(grid_layer[[purpose]], 2), nsmall = 2)
+      )
+
+      map <- map |>
+        add_fill_layer(
+          id = grid_layer_id,
+          source = grid_layer,
+          fill_color = fill_color,
+          fill_opacity = 0.7,
+          fill_outline_color = "#666666",
+          visibility = "none",
+          popup = grid_popup_col,
+          tooltip = grid_tooltip_col,
+          hover_options = list(fill_outline_color = "#ff3333", fill_opacity = 0.85)
+        ) |>
+        add_continuous_legend(
+          legend_title = grid_group,
+          values = stops$values,
+          colors = stops$colors,
+          position = "bottom-right",
+          layer_id = grid_layer_id,
+          unique_id = paste0(grid_layer_id, "_legend"),
+          add = TRUE
         )
+      layer_control[[grid_group]] <- grid_layer_id
     }
   }
 
-  overlay_groups <- zone_groups
-  if (has_grid) overlay_groups <- c(overlay_groups, grid_groups)
-
-  hide_groups <- zone_groups[-1]
-  if (has_grid) hide_groups <- c(hide_groups, grid_groups)
-
-  map <- map %>%
-    addLayersControl(
-      baseGroups = c("OpenStreetMap", "CartoDB"),
-      overlayGroups = overlay_groups,
-      options = layersControlOptions(collapsed = FALSE)
-    ) %>%
-    hideGroup(hide_groups)
+  map <- map |>
+    add_layers_control(
+      position = "top-left",
+      layers = layer_control,
+      collapsible = FALSE,
+      background_color = "#ffffff",
+      active_color = "#3578c6"
+    )
 
   htmlwidgets::saveWidget(map, file = path_output_html, selfcontained = TRUE)
   msg("Interactive map written: ", path_output_html)
 }
-
 make_overview_image_map <- function(zones_subset, zone_type, purposes, output_dir) {
   zones_long <- as.data.table(sf::st_drop_geometry(zones_subset))
   zones_long <- melt(

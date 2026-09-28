@@ -15,6 +15,8 @@ The repository currently includes an example configuration for German attractive
 For methodological background see, e.g.:
 * Klinkhardt, C.; Wörle, T.; Briem, L.; Heilig, M.; Kagerbauer, M.; Vortisch, P. (2021). Using OpenStreetMap as a Data Source for Attractiveness in Travel Demand Models. Transportation research record, 2675 (8), 294–303. [doi:10.1177/0361198121997415](https://doi.org/10.1177/0361198121997415)  
 
+The framework was presented at State of the Map 2026, [the presentation is available here](https://2026.stateofthemap.org/sessions/EYA7UN/).
+
 ## Getting Started
 
 This section explains how to run the project on a local machine.
@@ -31,7 +33,7 @@ Required software:
 
 Python packages (see [requirements.txt](requirements.txt)): geopandas, pandas, shapely, pyyaml.
 
-R packages used by the make scripts: this.path, yaml, data.table, sf
+R packages used by the make and evaluation scripts: this.path, yaml, data.table, sf, jsonlite, digest, ggplot2, mapgl
 
 Data prerequisites:
 
@@ -62,10 +64,10 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-4. Install R dependencies (example).
+4. Install R dependencies.
 
 ```r
-install.packages(c("this.path", "yaml", "data.table", "sf"))
+install.packages(c("this.path", "yaml", "data.table", "sf", "jsonlite", "digest", "ggplot2", "mapgl"))
 ```
 
 5. Adapt the config file in [config](config) or create your own by copying an example: [config/config_rastatt_example.yaml](config/config_rastatt_example.yaml)
@@ -197,6 +199,9 @@ When contributing code, include:
 - A short rationale for the change
 - Any config/data assumptions
 - Validation notes (what was tested and on which area)
+
+## Forks
+- Python-only adaption: https://github.com/m-schi/OSM2AttractivenessPy
 
 ## License
 
